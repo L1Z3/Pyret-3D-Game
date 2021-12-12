@@ -227,6 +227,21 @@ where:
   array-to-image(image-to-array(DIRT-IMAGE)) is DIRT-IMAGE
 end
 
+# TODO fix this: it breaks on some cases
+fun draw-rectangle(img :: ArrImage, x1 :: Number, y1 :: Number, x2 :: Number, y2 :: Number, a-color :: Color) -> Nothing:
+  doc: "Draws a rectangle on an ArrImage by mutation"
+  for each(y from range(y1, y2 + 1)):
+  row = raw-array-get(img, y)
+    for each(x from range(x1, x2 + 1)):
+      raw-array-set(row, x, a-color)
+    end
+  end
+where:
+  arr = image-to-array(DIRT-IMAGE)
+  draw-rectangle(arr, 0, 0, 15, 15, white)
+  array-to-image(arr) is rectangle(16, 16, "solid", white)
+end
+
 # general
 # TODO implement general matrix multiplication, etc
 fun move-player(dx :: Number, dy :: Number, dz :: Number, state :: State) -> State:
@@ -574,13 +589,9 @@ fun set-pixel(x :: Number, y :: Number, a-color :: Color, disp :: Image) -> Imag
   underlay-xy(disp, x, y, rectangle(1, 1, "solid", a-color))
 end
 
-fun make-background() -> Image:
+fun make-background() -> ArrImage:
   doc: ```Produces the background of the game.```
-  rectangle(
-      SCREEN-DIMS.w, 
-      SCREEN-DIMS.h, 
-      "solid",
-      BG-COLOR)
+  raw-array-of(raw-array-of(BG-COLOR, SCREEN-DIMS.w), SCREEN-DIMS.h)
 end
 
 fun get-xy(a-pos :: Pos) -> Point:
@@ -736,23 +747,15 @@ fun draw-debug(disp :: Image, state :: State) -> Image:
   end
 end
 
-fun draw-crosshair(disp :: Image) -> Image:
+fun draw-crosshair(disp :: ArrImage) -> Nothing block:
   doc: ```Draws a crosshair on the screen```
   size = num-ceiling((SCREEN-DIMS.h / 30) / 2) 
   width = num-ceiling((SCREEN-DIMS.h / 400) / 2) 
   center-x = num-floor(SCREEN-DIMS.w / 2)
   center-y = num-floor(SCREEN-DIMS.h / 2)
-  #|for fold(disp1 from disp, y-offset from range(0 - size, size + 1)):
-    for fold(disp2 from disp1, x-offset from range(0 - width, width + 1)):
-      x = center-x + x-offset
-      y = center-y + y-offset
-      cur-color = get-pixel(x, y, disp)
-      new-color = invert-color(cur-color)
-      set-pixel(x, y, new-color, disp2)
-    end
-  end|#
-  underlay-xy(disp, center-x - width, center-y - size, rectangle(width * 2, size * 2, "solid", white))
-    ^ underlay-xy(_, center-x - size, center-y - width, rectangle(size * 2, width * 2, "solid", white))
+  # TODO try doing weird inverted color crosshair again
+  draw-rectangle(disp, center-x - width, center-y - size, center-x + width, center-y + size, white)
+  draw-rectangle(disp, center-x - size, center-y - width, center-x + size, center-y + width, white)
 end
 
 #============= METHODS =============#
@@ -801,12 +804,15 @@ end
 
 fun draw-screen(state :: State) -> Image:
   doc: ```Draws current game state.```
-  cases (State) state:
+  cases (State) state block:
     | game(a-player, cur-bloks, _) =>
-      make-background()
-        ^ draw-bloks(_, state)
-        ^ draw-debug(_, state)
-        ^ draw-crosshair(_)
+      # TODO figure out relative efficiency of array drawing vs actually using image library
+      arr-img = make-background()
+      # draw-bloks(arr-img, state)
+      draw-crosshair(arr-img)
+      # text is annoying to draw pixel-wise so I'll just use the builtins for that lol
+      array-to-image(arr-img)
+      #  ^ draw-debug(_, state)
   end
 end
 
