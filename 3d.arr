@@ -20,7 +20,7 @@ include string-dict
 
 #============= CONSTANTS =============#
 fun image-to-array(an-image :: Image) -> RawArray<RawArray<Color>> block:
-  doc: ```Converts an image to a 3d RawArray```
+  doc: ```Converts an image to a 2d RawArray```
   w = image-width(an-image)
   h = image-height(an-image)
   arr = raw-array-of(nothing, h)
