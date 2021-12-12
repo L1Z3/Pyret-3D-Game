@@ -222,7 +222,7 @@ fun array-to-image(an-arr :: ArrImage) -> Image:
         link(raw-array-get(raw-array-get(an-arr, y), x), base2)
       end
     end
-  color-list-to-bitmap(lst)
+  color-list-to-bitmap(lst, w, h)
 where:
   array-to-image(image-to-array(TEX-IMAGE)) is TEX-IMAGE
 end
