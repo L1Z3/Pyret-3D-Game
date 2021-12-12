@@ -23,12 +23,14 @@ fun image-to-array(an-image :: Image) -> RawArray<RawArray<Color>> block:
   doc: ```Converts an image to a 3d RawArray```
   w = image-width(an-image)
   h = image-height(an-image)
-  arr = raw-array-of(raw-array-of(color(0, 0, 0, 0), w), h)
-  for each(y from range(0, h)):
+  arr = raw-array-of(nothing, h)
+  for each(y from range(0, h)) block:
+    row = raw-array-of(color(0, 0, 0, 0), w)
     for each(x from range(0, w)):
       cur-color = color-at-position(an-image, x, y)
-      raw-array-set(raw-array-get(arr, y), x, cur-color)
+      raw-array-set(row, x, cur-color)
     end
+    raw-array-set(arr, y, row)
   end
   arr
 end
@@ -36,7 +38,9 @@ BG-COLOR = "dark-slate-blue"
 SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
+DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
 TEX = image-to-array(image-url("https://i.imgur.com/uoJhNzd.png"))
+type ArrImage = RawArray<RawArray<Color>>
 
 
 #============= DATA TYPES =============#
@@ -208,14 +212,19 @@ data State:
 end
 
 #============= HELPER METHODS =============#
-
-
-fun array-to-image(an-arr :: RawArray<RawArray<Color>>):
-  doc: ```Takes in a 2D RawArray of colors and returns an image```
-  #|lst = 
-    for map(y from range(0, raw-array-length(an-arr))):
-      for map(x from range(0, raw-array-get(an-arr, y))):|#
-  ...
+fun array-to-image(an-arr :: ArrImage) -> Image:
+  doc: ```Takes in a 2D RawArray of colors and returns an image; expects nonempty array```
+  h = raw-array-length(an-arr)
+  w = raw-array-length(raw-array-get(an-arr, 0))
+  lst =
+    for fold(base from empty, y from range-by(h - 1, -1, -1)):
+      for fold(base2 from base, x from range-by(w - 1, -1, -1)):
+        link(raw-array-get(raw-array-get(an-arr, y), x), base2)
+      end
+    end
+  color-list-to-bitmap(lst, w, h)
+where:
+  array-to-image(image-to-array(DIRT-IMAGE)) is DIRT-IMAGE
 end
 
 # general
