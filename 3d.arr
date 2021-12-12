@@ -38,8 +38,8 @@ BG-COLOR = "dark-slate-blue"
 SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
-TEX-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
-TEX = image-to-array(TEX-IMAGE)
+DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
+TEX = image-to-array(image-url("https://i.imgur.com/uoJhNzd.png"))
 type ArrImage = RawArray<RawArray<Color>>
 
 
@@ -224,7 +224,7 @@ fun array-to-image(an-arr :: ArrImage) -> Image:
     end
   color-list-to-bitmap(lst, w, h)
 where:
-  array-to-image(image-to-array(TEX-IMAGE)) is TEX-IMAGE
+  array-to-image(image-to-array(DIRT-IMAGE)) is DIRT-IMAGE
 end
 
 # general
