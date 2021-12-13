@@ -20,27 +20,24 @@ include gdrive-js("js-helpers.js", "<insert drive id here>")
 |#
 
 #============= CONSTANTS =============#
-fun image-to-array(an-image :: Image) -> RawArray<RawArray<Color>> block:
+data ArrImage:
+  | arr-img(width :: Number, height :: Number, arr :: RawArray<Color>)
+end
+
+fun image-to-array(an-image :: Image) -> ArrImage block:
   doc: ```Converts an image to a 2d RawArray```
   w = image-width(an-image)
   h = image-height(an-image)
-  arr = raw-array-of(nothing, h)
-  for each(y from range(0, h)) block:
-    row = raw-array-of(color(0, 0, 0, 0), w)
-    for each(x from range(0, w)):
-      cur-color = color-at-position(an-image, x, y)
-      raw-array-set(row, x, cur-color)
-    end
+  arr = raw-array-from-list(image-to-color-list(an-image))
+  arr-img(w, h, arr)
+end
 BG-COLOR = dark-slate-blue
   end
-  arr
-end
 SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
 DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
 TEX = image-to-array(image-url("https://i.imgur.com/uoJhNzd.png"))
-type ArrImage = RawArray<RawArray<Color>>
 
 
 #============= DATA TYPES =============#
@@ -212,28 +209,30 @@ data State:
 end
 
 #============= HELPER METHODS =============#
-fun array-to-image(an-arr :: ArrImage) -> Image:
+fun array-to-image(an-arr-img :: ArrImage) -> Image:
   doc: ```Takes in a 2D RawArray of colors and returns an image; expects nonempty array```
-  h = raw-array-length(an-arr)
-  w = raw-array-length(raw-array-get(an-arr, 0))
-  lst =
-    for fold(base from empty, y from range-by(h - 1, -1, -1)):
-      for fold(base2 from base, x from range-by(w - 1, -1, -1)):
-        link(raw-array-get(raw-array-get(an-arr, y), x), base2)
-      end
-    end
-  color-list-to-bitmap(lst, w, h)
+  cases (ArrImage) an-arr-img:
+    | arr-img(w, h, an-arr) =>
+      array-to-image-internal(w, h, an-arr)
+  end
 where:
   array-to-image(image-to-array(DIRT-IMAGE)) is DIRT-IMAGE
 end
 
 # TODO fix this: it breaks on some cases
-fun draw-rectangle(img :: ArrImage, x1 :: Number, y1 :: Number, x2 :: Number, y2 :: Number, a-color :: Color) -> Nothing:
+fun draw-rectangle(
+  an-arr-img :: ArrImage, 
+  x1 :: Number, y1 :: Number, 
+  x2 :: Number, y2 :: Number, 
+  a-color :: Color) 
+-> Nothing:
   doc: "Draws a rectangle on an ArrImage by mutation"
+  arr = an-arr-img.arr
+  w = an-arr-img.width
   for each(y from range(y1, y2 + 1)):
-  row = raw-array-get(img, y)
+    start-ind = y * w
     for each(x from range(x1, x2 + 1)):
-      raw-array-set(row, x, a-color)
+      raw-array-set(arr, start-ind + x, a-color)
     end
   end
 where:
@@ -591,7 +590,7 @@ end
 
 fun make-background() -> ArrImage:
   doc: ```Produces the background of the game.```
-  raw-array-of(raw-array-of(BG-COLOR, SCREEN-DIMS.w), SCREEN-DIMS.h)
+  arr-img(SCREEN-DIMS.w, SCREEN-DIMS.h, raw-array-of(BG-COLOR, SCREEN-DIMS.w * SCREEN-DIMS.h))
 end
 
 fun get-xy(a-pos :: Pos) -> Point:
