@@ -751,9 +751,33 @@ fun draw-crosshair(disp :: ArrImage) -> Nothing block:
   width = num-ceiling((SCREEN-DIMS.h / 400) / 2) 
   center-x = num-floor(SCREEN-DIMS.w / 2)
   center-y = num-floor(SCREEN-DIMS.h / 2)
-  # TODO try doing weird inverted color crosshair again
-  draw-rectangle(disp, center-x - width, center-y - size, center-x + width, center-y + size, white)
-  draw-rectangle(disp, center-x - size, center-y - width, center-x + size, center-y + width, white)
+  arr = disp.arr
+  w = disp.width
+  # TODO evaluate if this is too expensive to actually do
+  for each(y-offset from range(0 - size, size + 1)):
+    for each(x-offset from range(0 - width, width + 1)):
+      x = center-x + x-offset
+      y = center-y + y-offset
+      index = x + (y * w)
+      cur-color = raw-array-get(arr, index)
+      new-color = invert-color(cur-color)
+      raw-array-set(arr, index, new-color)
+    end
+  end
+  for each(y-offset from range(0 - width, width + 1)):
+    for each(x-offset from range(0 - size, size + 1)):
+      if num-abs(x-offset) < (width + 1):
+        nothing
+      else:
+        x = center-x + x-offset
+        y = center-y + y-offset
+        index = x + (y * w)
+        cur-color = raw-array-get(arr, index)
+        new-color = invert-color(cur-color)
+        raw-array-set(arr, index, new-color)
+      end
+    end
+  end
 end
 
 #============= METHODS =============#
