@@ -31,11 +31,10 @@ fun image-to-array(an-image :: Image) -> RawArray<RawArray<Color>> block:
       cur-color = color-at-position(an-image, x, y)
       raw-array-set(row, x, cur-color)
     end
-    raw-array-set(arr, y, row)
+BG-COLOR = dark-slate-blue
   end
   arr
 end
-BG-COLOR = "dark-slate-blue"
 SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
@@ -67,12 +66,12 @@ sharing:
   method get-color(self :: FaceDir) -> String:
     doc: "Temp method to make the faces different color"
     cases (FaceDir) self:
-      | px => "light-coral"
-      | nx => "maroon"
-      | py => "light-sea-green"
-      | ny => "cornflower-blue"
-      | pz => "medium-purple"
-      | nz => "dark-magenta"
+      | px => light-coral
+      | nx => maroon
+      | py => light-sea-green
+      | ny => cornflower-blue
+      | pz => medium-purple
+      | nz => dark-magenta
     end
   end,
   method get-id(self :: FaceDir) -> Number:
