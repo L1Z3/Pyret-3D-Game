@@ -805,12 +805,12 @@ fun draw-screen(state :: State) -> Image:
   cases (State) state block:
     | game(a-player, cur-bloks, _) =>
       # TODO figure out relative efficiency of array drawing vs actually using image library
-      arr-img = make-background()
+      an-arr-img = make-background()
       # draw-bloks(arr-img, state)
-      draw-crosshair(arr-img)
+      draw-crosshair(an-arr-img)
       # text is annoying to draw pixel-wise so I'll just use the builtins for that lol
-      array-to-image(arr-img)
-      #  ^ draw-debug(_, state)
+      array-to-image(an-arr-img)
+        ^ draw-debug(_, state)
         ^ scale(2, _)
   end
 end
