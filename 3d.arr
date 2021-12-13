@@ -32,8 +32,7 @@ fun image-to-array(an-image :: Image) -> ArrImage block:
   arr-img(w, h, arr)
 end
 BG-COLOR = dark-slate-blue
-  end
-SCREEN-DIMS = {w : 1422, h : 800}
+SCREEN-DIMS = {w : 711, h : 400}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
 DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
@@ -812,6 +811,7 @@ fun draw-screen(state :: State) -> Image:
       # text is annoying to draw pixel-wise so I'll just use the builtins for that lol
       array-to-image(arr-img)
       #  ^ draw-debug(_, state)
+        ^ scale(2, _)
   end
 end
 
