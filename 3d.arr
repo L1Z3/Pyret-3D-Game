@@ -4,6 +4,7 @@ include image
 include image-structs
 include math
 include string-dict
+include gdrive-js("js-helpers.js", "<insert drive id here>")
 
 #| CONTROLS:
    w moves forwards
