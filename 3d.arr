@@ -19,28 +19,12 @@ include string-dict
 |#
 
 #============= CONSTANTS =============#
-fun image-to-array(an-image :: Image) -> RawArray<RawArray<Color>> block:
-  doc: ```Converts an image to a 2d RawArray```
-  w = image-width(an-image)
-  h = image-height(an-image)
-  arr = raw-array-of(nothing, h)
-  for each(y from range(0, h)) block:
-    row = raw-array-of(color(0, 0, 0, 0), w)
-    for each(x from range(0, w)):
-      cur-color = color-at-position(an-image, x, y)
-      raw-array-set(row, x, cur-color)
-    end
-    raw-array-set(arr, y, row)
-  end
-  arr
-end
-BG-COLOR = "dark-slate-blue"
+BG-COLOR = dark-slate-blue
 SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
 DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
-TEX = image-to-array(image-url("https://i.imgur.com/uoJhNzd.png"))
-type ArrImage = RawArray<RawArray<Color>>
+TEX = image-url("https://i.imgur.com/uoJhNzd.png")
 
 
 #============= DATA TYPES =============#
@@ -52,7 +36,7 @@ data Pos:
 end
 
 data Rect:
-  | rect(point1 :: Pos, point2 :: Pos, point3 :: Pos, point4 :: Pos, color :: String)
+  | rect(point1 :: Pos, point2 :: Pos, point3 :: Pos, point4 :: Pos, color :: Color)
 end
 
 data FaceDir:
@@ -63,15 +47,15 @@ data FaceDir:
   | pz
   | nz
 sharing:
-  method get-color(self :: FaceDir) -> String:
+  method get-color(self :: FaceDir) -> Color:
     doc: "Temp method to make the faces different color"
     cases (FaceDir) self:
-      | px => "light-coral"
-      | nx => "maroon"
-      | py => "light-sea-green"
-      | ny => "cornflower-blue"
-      | pz => "medium-purple"
-      | nz => "dark-magenta"
+      | px => light-coral
+      | nx => maroon
+      | py => light-sea-green
+      | ny => cornflower-blue
+      | pz => medium-purple
+      | nz => dark-magenta
     end
   end,
   method get-id(self :: FaceDir) -> Number:
@@ -88,7 +72,7 @@ sharing:
 end
 
 data Face:
-  | face(position :: Pos, dir :: FaceDir, color :: Option<String>) with:
+  | face(position :: Pos, dir :: FaceDir, color :: Option<Color>) with:
     method get-points(self :: Face) -> List<Pos>:
       cases (Face) self:
         | face(position, dir, _) =>
@@ -212,21 +196,6 @@ data State:
 end
 
 #============= HELPER METHODS =============#
-fun array-to-image(an-arr :: ArrImage) -> Image:
-  doc: ```Takes in a 2D RawArray of colors and returns an image; expects nonempty array```
-  h = raw-array-length(an-arr)
-  w = raw-array-length(raw-array-get(an-arr, 0))
-  lst =
-    for fold(base from empty, y from range-by(h - 1, -1, -1)):
-      for fold(base2 from base, x from range-by(w - 1, -1, -1)):
-        link(raw-array-get(raw-array-get(an-arr, y), x), base2)
-      end
-    end
-  color-list-to-bitmap(lst, w, h)
-where:
-  array-to-image(image-to-array(DIRT-IMAGE)) is DIRT-IMAGE
-end
-
 # general
 # TODO implement general matrix multiplication, etc
 fun move-player(dx :: Number, dy :: Number, dz :: Number, state :: State) -> State:
@@ -644,7 +613,7 @@ end
 
 # TODO make this function actually sane
 fun project-rect(a-rect :: Rect, cur-player :: Player) 
-  -> Option<{Point; List<Point>; Number; String}>:
+  -> Option<{Point; List<Point>; Number; Color}>:
   doc: ```Takes in a rectangle in 3-space; outputs a tuple containing the x-y offset, the points
        of the projected rectangle, the average z-depth of the projected rectangle, 
        and the color of the projected rectangle```
