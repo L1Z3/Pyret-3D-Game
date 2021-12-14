@@ -24,8 +24,6 @@ SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
 DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
-TEX = image-url("https://i.imgur.com/uoJhNzd.png")
-
 
 #============= DATA TYPES =============#
 data Pos:
