@@ -21,7 +21,7 @@ include gdrive-js("js-helpers.js", "<insert drive id here>")
 
 #============= CONSTANTS =============#
 data ArrImage:
-  | arr-img(width :: Number, height :: Number, arr :: RawArray<Color>)
+  | arr-img(width :: Number, height :: Number, arr :: RawArray<Color>, z-buffer :: Option<RawArray<Number>>)
 end
 
 fun image-to-array(an-image :: Image) -> ArrImage block:
@@ -29,7 +29,7 @@ fun image-to-array(an-image :: Image) -> ArrImage block:
   w = image-width(an-image)
   h = image-height(an-image)
   arr = raw-array-from-list(image-to-color-list(an-image))
-  arr-img(w, h, arr)
+  arr-img(w, h, arr, none)
 end
 BG-COLOR = dark-slate-blue
 SCREEN-DIMS = {w : 711, h : 400}
@@ -48,7 +48,7 @@ data Pos:
 end
 
 data Rect:
-  | rect(point1 :: Pos, point2 :: Pos, point3 :: Pos, point4 :: Pos, color :: String)
+  | rect(point1 :: Pos, point2 :: Pos, point3 :: Pos, point4 :: Pos, color :: Color)
 end
 
 data FaceDir:
@@ -59,7 +59,7 @@ data FaceDir:
   | pz
   | nz
 sharing:
-  method get-color(self :: FaceDir) -> String:
+  method get-color(self :: FaceDir) -> Color:
     doc: "Temp method to make the faces different color"
     cases (FaceDir) self:
       | px => light-coral
@@ -211,7 +211,7 @@ end
 fun array-to-image(an-arr-img :: ArrImage) -> Image:
   doc: ```Takes in a 2D RawArray of colors and returns an image; expects nonempty array```
   cases (ArrImage) an-arr-img:
-    | arr-img(w, h, an-arr) =>
+    | arr-img(w, h, an-arr, _) =>
       array-to-image-internal(w, h, an-arr)
   end
 where:
@@ -229,9 +229,13 @@ fun draw-rectangle(
   arr = an-arr-img.arr
   w = an-arr-img.width
   for each(y from range(y1, y2 + 1)):
-    start-ind = y * w
-    for each(x from range(x1, x2 + 1)):
-      raw-array-set(arr, start-ind + x, a-color)
+    when not((y < 0) or (y >= SCREEN-DIMS.h)):
+      start-ind = y * w
+      for each(x from range(x1, x2 + 1)):
+        when not((x < 0) or (x >= SCREEN-DIMS.w)):
+          raw-array-set(arr, start-ind + x, a-color)
+        end
+      end
     end
   end
 where:
@@ -589,7 +593,8 @@ end
 
 fun make-background() -> ArrImage:
   doc: ```Produces the background of the game.```
-  arr-img(SCREEN-DIMS.w, SCREEN-DIMS.h, raw-array-of(BG-COLOR, SCREEN-DIMS.w * SCREEN-DIMS.h))
+  num-pixels = SCREEN-DIMS.w * SCREEN-DIMS.h
+  arr-img(SCREEN-DIMS.w, SCREEN-DIMS.h, raw-array-of(BG-COLOR, num-pixels), some(raw-array-of(-1, num-pixels)))
 end
 
 fun get-xy(a-pos :: Pos) -> Point:
@@ -676,44 +681,132 @@ fun project-rect(a-rect :: Rect, cur-player :: Player)
             point(
               (a-point.x * (SCREEN-DIMS.w / 2)) + (SCREEN-DIMS.w / 2), 
               (-1 * (a-point.y * (SCREEN-DIMS.h / 2))) + (SCREEN-DIMS.h / 2))})
-        # TODO make this min calculation sane
-        # get the min x/y so that the polygon can be drawn with (min-x, min-y) as offset
-        min-x = l3.foldl({(a-point, base): num-min(a-point.x, base)}, 1000000000)
-        min-y = l3.foldl({(a-point, base): num-min(a-point.y, base)}, 1000000000)
-        # make the coords of the points relative to (min-x, min-y)
-        l4 = l3.map({(a-point): point(a-point.x - min-x, a-point.y - min-y)})
-        # FLIP THE Y BECAUSE *APPARENTLY* FOR `point-polygon` ONLY, +Y IS UP, NOT DOWN!!
-        l5 = l4.map({(a-point): point(a-point.x, -1 * a-point.y)})
         # get the z-depth of all the points for, uh, reasons, idk
         zs = l1.map({(a-pos): a-pos.z})
         avg-z = sum(zs) / zs.length()
         min-z = min(zs)
-        some({point(min-x, min-y); l5; avg-z; a-color})
+        some({l3; avg-z; a-color})
       end
   end
 end
 
-fun draw-bloks(disp :: Image, state :: State) -> Image:
-  doc: ```Produces the background rectangles of the game.```
+fun calc-del-x(p1 :: Point, p2 :: Point) -> Number:
+  doc: ```Calculates the change in x for each scan line```
+  (p2.x - p1.x) / (p2.y - p1.y)
+end
+
+fun sort-points(p1, p2, p3) -> {Point; Point; Point}:
+  doc: "TODO"
+  p1-p2 = 
+    (p1.y < p2.y) or (within(0.000001)(p1.y, p2.y) and (p1.x <= p2.x))
+  p1-p3 = 
+    (p1.y < p3.y) or (within(0.000001)(p1.y, p3.y) and (p1.x <= p3.x))
+  p2-p3 = 
+    (p2.y < p3.y) or (within(0.000001)(p2.y, p3.y) and (p2.x <= p3.x))
+  # TODO make sure this covers all cases
+  ask:
+    | p1-p2 then:
+    ask:
+      | p2-p3 then: {p1; p2; p3}
+      | p1-p3 then: {p1; p3; p2}
+      | otherwise: {p3; p1; p2}
+    end
+    | p1-p3 then: {p2; p1; p3}
+    | p2-p3 then: {p2; p3; p1}
+    | otherwise: {p3; p2; p1}
+  end
+end
+
+# TODO evalutate efficiency and attempt to speed up
+  # one potential method: don't use arrays for background; only use for rendering polygons, then use overlay?
+# credit to https://youtu.be/PahbNFypubE for helping me to understand this algorithm
+fun draw-triangle(
+  disp :: ArrImage, 
+  p1-orig :: Point, 
+  p2-orig :: Point, 
+  p3-orig :: Point, 
+  a-color :: Color) 
+  -> Nothing block:
+  doc: ```Rasterizes a triangle```
+  # sort points top to bottom, then left to right on ties
+  {p1; p2; p3} = sort-points(p1-orig, p2-orig, p3-orig)
+  #spy: p1, p2, p3 end
+  {x1; y1; x2; y2; x3; y3} = {p1.x; p1.y; p2.x; p2.y; p3.x; p3.y}
+  #| we need to figure out if the "bend" of the triangle is on the left or the right; 
+     if we take the sign of the z component of the cross product--
+     vec(p2 to p1) x vec(p2 to p3)--
+     then we get the solution; if it's positive, the bend is on the right; 
+     if it's negative, the bend is on the left |#
+  # true for right bend, false for left bend
+  right-side-bent = ((x1 - x2) * (y3 - y2)) < ((y1 - y2) * (x3 - x2))
+  not-bend-side-del-x = calc-del-x(p1, p3)
+  var left-x = x1
+  var right-x = x1
+  # TODO remove code duplication
+  # TODO implement z buffer
+  # TODO fix things causing the rendering to be slightly off
+  when y1 < y2:
+    bend-side-del-x = calc-del-x(p1, p2)
+    for each(y from range(num-floor(y1), num-floor(y2))) block:
+      draw-rectangle(disp, num-floor(left-x), y, num-floor(right-x), y, a-color)
+      if right-side-bent block:
+        left-x := left-x + not-bend-side-del-x
+        right-x := right-x + bend-side-del-x
+      else:
+        left-x := left-x + bend-side-del-x
+        right-x := right-x + not-bend-side-del-x
+      end
+    end
+  end
+  when y2 < y3:
+    bend-side-del-x = calc-del-x(p2, p3)
+    for each(y from range(num-floor(y2), num-floor(y3))) block:
+      #spy: left-x, right-x end
+      # TODO why does this sometimes break, making this when required?
+      when left-x < right-x:
+        draw-rectangle(disp, num-floor(left-x), y, num-floor(right-x), y, a-color)
+      end
+      if right-side-bent block:
+        left-x := left-x + not-bend-side-del-x
+        right-x := right-x + bend-side-del-x
+      else:
+        left-x := left-x + bend-side-del-x
+        right-x := right-x + not-bend-side-del-x
+      end
+    end
+  end
+end
+
+fun draw-face(disp :: ArrImage, a-face :: Face, cur-player :: Player) -> Nothing:
+  doc: ```TODO```
+  a-rect = a-face.get-rect()
+  tuple-opt = project-rect(a-rect, cur-player)
+  cases (Option) tuple-opt block:
+    | none => nothing
+    | some({points; _; a-color}) =>
+      # TODO optimize
+      p1 = points.get(0)
+      p2 = points.get(1)
+      p3 = points.get(2)
+      p4 = points.get(3)
+      #spy: p1, p2, p3, p4 end
+      draw-triangle(disp, p1, p2, p3, a-color)
+      draw-triangle(disp, p1, p3, p4, a-color)
+  end
+end
+
+fun draw-bloks(disp :: ArrImage, state :: State) -> Nothing:
+  doc: ```Draws the bloks in the game world.```
   # go through the blocks
-  all-tuples = 
-    for fold(base from empty, a-chunk from state.chunks):
-      faces = a-chunk.bloks.fold-keys-now(
-        lam(a-key, base2): 
-          # TODO do lots of cases or something, you know
-          a-chunk.bloks.get-value-now(a-key)!mesh.value + base2
-        end, empty)
-      rects = faces.map({(f): f.get-rect()})
-      tuple-opts = rects.map({(a-rect): project-rect(a-rect, state.player)})
-      tuples = tuple-opts.filter(is-some).map({(opt): opt.value})
-      # welcome to the most hacky z-buffer in the world
-      tuples + base
-    end.sort-by({(t1, t2): t1.{2} > t2.{2}}, {(t1, t2): within(0.00001)(t1.{2}, t2.{2})})
-  for fold(disp2 from disp, {offset; points; _; a-color} from all-tuples):
-    uncropped-image = 
-      underlay-xy(disp2, offset.x, offset.y, point-polygon(points, "solid", a-color))
-    crop(num-max(0, 0 - offset.x), num-max(0, 0 - offset.y), SCREEN-DIMS.w, SCREEN-DIMS.h, 
-      uncropped-image)
+  for each(a-chunk from state.chunks):
+    faces = a-chunk.bloks.fold-keys-now(
+      lam(a-key, base2): 
+        # TODO do lots of cases or something, you know
+        a-chunk.bloks.get-value-now(a-key)!mesh.value + base2
+      end, empty)
+    for each(a-face from faces):
+      draw-face(disp, a-face, state.player)
+    end
   end
 end
 
@@ -830,7 +923,7 @@ fun draw-screen(state :: State) -> Image:
     | game(a-player, cur-bloks, _) =>
       # TODO figure out relative efficiency of array drawing vs actually using image library
       an-arr-img = make-background()
-      # draw-bloks(arr-img, state)
+      draw-bloks(an-arr-img, state)
       draw-crosshair(an-arr-img)
       # text is annoying to draw pixel-wise so I'll just use the builtins for that lol
       array-to-image(an-arr-img)
