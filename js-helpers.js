@@ -13,14 +13,16 @@
       "Image": { tag: "name",
                  origin: { "import-type": "uri", uri: "builtin://image" },
                  name: "Image" },
+      "Point": { tag: "name",
+                 origin: { "import-type": "uri", uri: "builtin://internal-image-shared" },
+                 name: "Point" },
       "Color": { tag: "name",
                  origin: { "import-type": "uri", uri: "builtin://color" },
                  name: "Color" }
     },
     values: { 
       "image-test": ["arrow", ["Image"], "Image"],
-      "transform-img": ["arrow", ["Number", "Number", "Number", "Number", "Number", "Number", "Image"], "Image"],
-      "get-texture-matrix": ["arrow", ["Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number", "Number"], ["RawArray", "Number"]]
+      "transform-img": ["arrow", ["Point", "Point", "Point", "Point", "Image"], "Image"]
     },
 
   },
@@ -28,32 +30,194 @@
   theModule: function(runtime, _, uri, imageLib, jsnums) {
     var image = runtime.getField(imageLib, "internal");
     var F = runtime.makeFunction;
-    function general2DProjection(
-      p1x, p1y, c1x, c1y,
-      p2x, p2y, c2x, c2y,
-      p3x, p3y, c3x, c3y,
-      p4x, p4y, c4x, c4y
-    ) {
-      C11=(c1x*(-(c3y*c4x) + c2y*(-c3x + c4x) + c2x*(c3y - c4y) + c3x*c4y)*(p2y - p3y)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y) + c2x*(c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(-p1y + p3y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y)) + c3x*(c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(-p1y + p2y)*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
 
-      C12=(c3x*(c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(p1x - p2x)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y) + c1x*(c2y*(c3x - c4x) + c3y*c4x - c3x*c4y + c2x*(-c3y + c4y))*(p2x - p3x)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y)) + c2x*(c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(p1x - p3x)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-
-      C13=((c2x*(c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(p1y*p3x - p1x*p3y))/(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y) + (c3x*(c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(p1y*p2x - p1x*p2y))/(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y)) + (c1x*(c2y*(c3x - c4x) + c3y*c4x - c3x*c4y + c2x*(-c3y + c4y))*(p2y*p3x - p2x*p3y))/(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/(c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y));
-
-      C21=(c1y*(-(c3y*c4x) + c2y*(-c3x + c4x) + c2x*(c3y - c4y) + c3x*c4y)*(p2y - p3y)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y) + c2y*(c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(-p1y + p3y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y)) + c3y*(-(c2y*c4x) + c1y*(-c2x + c4x) + c1x*(c2y - c4y) + c2x*c4y)*(p1y - p2y)*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-
-      C22=(c3y*(c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(p1x - p2x)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y) + c1y*(c2y*(c3x - c4x) + c3y*c4x - c3x*c4y + c2x*(-c3y + c4y))*(p2x - p3x)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y)) + c2y*(c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(p1x - p3x)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-
-      C23=(c3y*(c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(p1y*p2x - p1x*p2y)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y) + c1y*(c2y*(c3x - c4x) + c3y*c4x - c3x*c4y + c2x*(-c3y + c4y))*(p2y*p3x - p2x*p3y)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y)) + c2y*(c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(p1y*p3x - p1x*p3y)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-
-      C31=((-(c3y*c4x) + c2y*(-c3x + c4x) + c2x*(c3y - c4y) + c3x*c4y)*(p2y - p3y)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y) + (c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(-p1y + p3y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y)) + (c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(-p1y + p2y)*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-
-      C32=((c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(p1x - p2x)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y) + (c2y*(c3x - c4x) + c3y*c4x - c3x*c4y + c2x*(-c3y + c4y))*(p2x - p3x)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y)) + (c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(p1x - p3x)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-
-      C33=((c1y*(c2x - c4x) + c2y*c4x - c2x*c4y + c1x*(-c2y + c4y))*(p1y*p2x - p1x*p2y)*(-(p3y*p4x) + p1y*(-p3x + p4x) + p1x*(p3y - p4y) + p3x*p4y)*(-(p3y*p4x) + p2y*(-p3x + p4x) + p2x*(p3y - p4y) + p3x*p4y) + (c2y*(c3x - c4x) + c3y*c4x - c3x*c4y + c2x*(-c3y + c4y))*(p2y*p3x - p2x*p3y)*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y)) + (c1y*(c3x - c4x) + c3y*c4x - c3x*c4y + c1x*(-c3y + c4y))*(p1y*p3x - p1x*p3y)*(-(p2y*p4x) + p1y*(-p2x + p4x) + p1x*(p2y - p4y) + p2x*p4y)*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)))/((c1y*(c2x - c3x) + c2y*c3x - c2x*c3y + c1x*(-c2y + c3y))*(p1y*(p2x - p4x) + p2y*p4x - p2x*p4y + p1x*(-p2y + p4y))*(p1y*(p3x - p4x) + p3y*p4x - p3x*p4y + p1x*(-p3y + p4y))*(p2y*(p3x - p4x) + p3y*p4x - p3x*p4y + p2x*(-p3y + p4y)));
-      t3 = [C11, C12, C13, C21, C22, C23, C31, C32, C33]
-      return t3;
+    // point class
+    var Point = function(x,y) {
+      this.x = x?x:0;
+      this.y = y?y:0;
     }
+
+    var p = Point.prototype;
+
+    var TextCoord = function(u,v) {
+      this.u = u?u:0;
+      this.v = v?v:0;
+    }
+
+    var Triangle = function(p0, p1, p2, t0, t1, t2) {
+      this.p0 = p0;
+      this.p1 = p1;
+      this.p2 = p2;
+
+      this.t0 = t0;
+      this.t1 = t1;
+      this.t2 = t2;
+    }
+
+    // from https://stackoverflow.com/questions/4097688/draw-distorted-image-on-html5s-canvas
+    var draw = function(p1, p2, p3, p4, img, context) {
+      //context.clearRect(0,0,1422,800);
+      p1New = new Point(p1.x, p1.y);
+      p2New = new Point(p2.x, p2.y);
+      p3New = new Point(p3.x, p3.y);
+      p4New = new Point(p4.x, p4.y);
+
+      var render = function(anImage, tri) {
+          if (anImage) {
+            drawTriangle(context, anImage,
+                 tri.p0.x, tri.p0.y,
+                 tri.p1.x, tri.p1.y,
+                 tri.p2.x, tri.p2.y,
+                 tri.t0.u, tri.t0.v,
+                 tri.t1.u, tri.t1.v,
+                 tri.t2.u, tri.t2.v);
+        }
+      }
+      // TODO, make it so it only recalculates when moved?
+      //var triangles = calculateGeometry(new Point(0, 0), new Point(100, 0), new Point(150, 150), new Point(0, 100));
+      var triangles = calculateGeometry(img, p1New, p2New, p3New, p4New);
+
+      for (triangle of triangles) {
+        render(img, triangle);
+      }
+    }
+
+    // from https://stackoverflow.com/questions/4097688/draw-distorted-image-on-html5s-canvas
+    var calculateGeometry = function(img, p1, p2, p3, p4) {
+      // clear triangles out
+      var triangles = [];
+
+      // generate subdivision
+      var subs = 7; // vertical subdivisions
+      var divs = 7; // horizontal subdivisions
+
+      var dx1 = p4.x - p1.x;
+      var dy1 = p4.y - p1.y;
+      var dx2 = p3.x - p2.x;
+      var dy2 = p3.y - p2.y;
+
+      var imgW = img.naturalWidth;
+      var imgH = img.naturalHeight;
+
+      for (var sub = 0; sub < subs; ++sub) {
+        var curRow = sub / subs;
+        var nextRow = (sub + 1) / subs;
+
+        var curRowX1 = p1.x + dx1 * curRow;
+        var curRowY1 = p1.y + dy1 * curRow;
+        
+        var curRowX2 = p2.x + dx2 * curRow;
+        var curRowY2 = p2.y + dy2 * curRow;
+
+        var nextRowX1 = p1.x + dx1 * nextRow;
+        var nextRowY1 = p1.y + dy1 * nextRow;
+        
+        var nextRowX2 = p2.x + dx2 * nextRow;
+        var nextRowY2 = p2.y + dy2 * nextRow;
+
+        for (var div = 0; div < divs; ++div) {
+          var curCol = div / divs;
+          var nextCol = (div + 1) / divs;
+
+          var dCurX = curRowX2 - curRowX1;
+          var dCurY = curRowY2 - curRowY1;
+          var dNextX = nextRowX2 - nextRowX1;
+          var dNextY = nextRowY2 - nextRowY1;
+
+          var p1x = curRowX1 + dCurX * curCol;
+          var p1y = curRowY1 + dCurY * curCol;
+
+          var p2x = curRowX1 + (curRowX2 - curRowX1) * nextCol;
+          var p2y = curRowY1 + (curRowY2 - curRowY1) * nextCol;
+
+          var p3x = nextRowX1 + dNextX * nextCol;
+          var p3y = nextRowY1 + dNextY * nextCol;
+
+          var p4x = nextRowX1 + dNextX * curCol;
+          var p4y = nextRowY1 + dNextY * curCol;
+
+          var u1 = curCol * imgW;
+          var u2 = nextCol * imgW;
+          var v1 = curRow * imgH;
+          var v2 = nextRow * imgH;
+
+          /*var triangle1 = new Triangle(
+            new Point(p1x-1, p1y),
+            new Point(p3x+2, p3y+1),
+            new Point(p4x-1, p4y+1),
+            new TextCoord(u1, v1),
+            new TextCoord(u2, v2),
+            new TextCoord(u1, v2)
+          );
+
+          var triangle2 = new Triangle(
+            new Point(p1x-2, p1y),
+            new Point(p2x+1, p2y),
+            new Point(p3x+1, p3y+1),
+            new TextCoord(u1, v1),
+            new TextCoord(u2, v1),
+            new TextCoord(u2, v2)
+          );*/
+
+          var triangle1 = new Triangle(
+            new Point(p1x, p1y),
+            new Point(p3x, p3y),
+            new Point(p4x, p4y),
+            new TextCoord(u1, v1),
+            new TextCoord(u2, v2),
+            new TextCoord(u1, v2)
+          );
+
+          var triangle2 = new Triangle(
+            new Point(p1x, p1y),
+            new Point(p2x, p2y),
+            new Point(p3x, p3y),
+            new TextCoord(u1, v1),
+            new TextCoord(u2, v1),
+            new TextCoord(u2, v2)
+          );
+
+          triangles.push(triangle1);
+          triangles.push(triangle2);
+        }
+      }
+      return triangles;
+    }
+
+    // from http://tulrich.com/geekstuff/canvas/jsgl.js
+    var drawTriangle = function(ctx, im, x0, y0, x1, y1, x2, y2,
+        sx0, sy0, sx1, sy1, sx2, sy2) {
+        ctx.save();
+
+        // Clip the output to the on-screen triangle boundaries.
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.closePath();
+        //ctx.stroke();//xxxxxxx for wireframe
+        ctx.clip();
+
+        var denom = sx0 * (sy2 - sy1) - sx1 * sy2 + sx2 * sy1 + (sx1 - sx2) * sy0;
+        if (denom == 0) {
+            return;
+        }
+        var m11 = -(sy0 * (x2 - x1) - sy1 * x2 + sy2 * x1 + (sy1 - sy2) * x0) / denom;
+        var m12 = (sy1 * y2 + sy0 * (y1 - y2) - sy2 * y1 + (sy2 - sy1) * y0) / denom;
+        var m21 = (sx0 * (x2 - x1) - sx1 * x2 + sx2 * x1 + (sx1 - sx2) * x0) / denom;
+        var m22 = -(sx1 * y2 + sx0 * (y1 - y2) - sx2 * y1 + (sx2 - sx1) * y0) / denom;
+        var dx = (sx0 * (sy2 * x1 - sy1 * x2) + sy0 * (sx1 * x2 - sx2 * x1) + (sx2 * sy1 - sx1 * sy2) * x0) / denom;
+        var dy = (sx0 * (sy2 * y1 - sy1 * y2) + sy0 * (sx1 * y2 - sx2 * y1) + (sx2 * sy1 - sx1 * sy2) * y0) / denom;
+
+        ctx.transform(m11, m12, m21, m22, dx, dy);
+        ctx.imageSmoothingEnabled = false;
+        // ctx.filter = 'brightness(50%)';
+
+        // Draw the whole image.  Transform and clip will map it onto the
+        // correct output triangle.
+        ctx.drawImage(im, 0, 0);
+        ctx.restore();
+    };
 
 
     // temp function
@@ -63,94 +227,46 @@
       return img;
     }
 
-    // given an array of (x, y) pairs, unzip them into separate arrays
-    var unzipVertices = function(vertices){
-        return {xs: vertices.map(function(v) { return v.x }),
-                ys: vertices.map(function(v) { return v.y })};
-    };
-    // given an array of vertices, find the width of the shape
-    var findWidth = function(vertices){
-        var xs = unzipVertices(vertices).xs;
-        return Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
-    }
-    // given an array of vertices, find the height of the shape
-    var findHeight = function(vertices){
-        var ys = unzipVertices(vertices).ys;
-        return Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
-    }
-
-    // given a list of vertices and optionally a translationX/Y, shift them
-    var translateVertices = function(vertices, translation) {
-      var vs = unzipVertices(vertices);
-      var translateX = -Math.min.apply( Math, vs.xs );
-      var translateY = -Math.min.apply( Math, vs.ys );
-      if (translation) {
-        translation.x = translateX;
-        translation.y = translateY;
+    var unwrapPoint2D = function(val) {
+      var gf = runtime.getField;
+      var hf = runtime.hasField;
+      if (hf(val, "r") && hf(val, "theta")) {
+        var r = jsnums.toFixnum(gf(val, "r"));
+        var theta = jsnums.toFixnum(gf(val, "theta"));
+        return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
       }
-      return vertices.map(function(v) {
-        return {x: v.x + translateX, y: v.y + translateY };
-      })
-    }
+      return { x: jsnums.toFixnum(gf(val, "x")), y: jsnums.toFixnum(gf(val, "y")) };
+    };
 
-    var TransformImage = function(a, b, c, d, e, f, img) {
+    var TransformImage = function(p1, p2, p3, p4, img) {
       image.BaseImage.call(this);
-      // grab the img vertices, scale them, and save the result to this_vertices
-      var vertices = img.getVertices().map(function(v) {
-          return {x: a * v.x + b * v.y/* + c*/, y: d * v.x + e * v.y /*+ f*/ };
-      });
-
       // extract the xs and ys separately
-      // var vs = unzipVertices(vertices);
-
-      var translate = {};
-      this._vertices  = translateVertices(vertices, translate);
-      this.translateX = translate.x;
-      this.translateY = translate.y;
+      var xs = [p1.x, p2.x, p3.x, p4.x];
+      var ys = [p1.y, p2.y, p3.y, p4.y];
 
       this.img      = img;
-      this.width    = findWidth(this._vertices);
-      this.height   = findHeight(this._vertices);
-      /* my matrix vs the browser's matrix:
-         | a b c |    | a c e |
-         | d e f | vs | b d f |
-         | 0 0 1 |    | 0 0 1 | 
-         therefore, we have to change the order here: */
-      this.matrixVals = [a, d, b, e, c, f];
-      //this.pinholeX = this._vertices[0].x;
-      this.pinholeX = a * img.pinholeX + b * img.pinholeY/* + c*/;
-      //this.pinholeY = this._vertices[0].y;
-      this.pinholeY = d * img.pinholeX + e * img.pinholeY /*+ f*/;
-      /*if (a < 0) { // translate pinhole into image region
-        this.pinholeX += this.width;
-        this._vertices.forEach((v) => v.x += this.width);
-      }
-      if (e < 0) { // translate pinhole into image region
-        this.pinholeY += this.height;
-        this._vertices.forEach((v) => v.y += this.height);
-      }*/
+      // TODO fix this--it assumes subimage is a fileimage
+      this.rawImage = img.img;
+      this.p1 = p1;
+      this.p2 = p2;
+      this.p3 = p3;
+      this.p4 = p4;
+      this.width    = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
+      this.height   = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+
+      this.pinholeX = this.width / 2;
+      this.pinholeY = this.height / 2;
+
     };
 
     var heir = Object.create;
 
     TransformImage.prototype = heir(image.BaseImage.prototype);
 
-    TransformImage.prototype.getVertices = function() { return this._vertices; };
-
-    // scale the context, and pass it to the image's render function
     TransformImage.prototype.render = function(ctx) {
-      console.dir(ctx);
-      ctx.save();
-      console.log(this.matrixVals[0]);
-      console.log(this.matrixVals);
-      ctx.imageSmoothingEnabled = false;
-      ctx.transform(this.matrixVals[0], this.matrixVals[1], this.matrixVals[2], this.matrixVals[3], this.matrixVals[4], this.matrixVals[5]);
-      ctx.translate(this.translateX, this.translateY);
-      //ctx.transform(1, 0, 0, 0, 1, 0);
-      //ctx.scale(2, 1);
-      console.log(ctx.getTransform());
-      this.img.render(ctx);
-      ctx.restore();
+      //ctx.save();
+      draw(this.p1, this.p2, this.p3, this.p4, this.rawImage, ctx)
+      //ctx.restore();
     };
 
     TransformImage.prototype.equals = function(other) {
@@ -172,32 +288,17 @@
     return runtime.makeModuleReturn({
 
       "image-test": F(imageStuff, "image-test"),
-      "transform-img": F(function(maybeA, maybeB, maybeC, maybeD, maybeE, maybeF, maybeImg) {
-        runtime.checkArity(7, arguments, "transform-img", false);
+      "transform-img": F(function(maybeP1, maybeP2, maybeP3, maybeP4, maybeImg) {
+        runtime.checkArity(5, arguments, "transform-img", false);
         // c2("rotate", maybeAngle, annReal, maybeImg, annImage);
-        var a = jsnums.toFixnum(maybeA);
-        var b = jsnums.toFixnum(maybeB);
-        var c = jsnums.toFixnum(maybeC);
-        var d = jsnums.toFixnum(maybeD);
-        var e = jsnums.toFixnum(maybeE);
-        var f = jsnums.toFixnum(maybeF);
+        var p1 = unwrapPoint2D(maybeP1);
+        var p2 = unwrapPoint2D(maybeP2);
+        var p3 = unwrapPoint2D(maybeP3);
+        var p4 = unwrapPoint2D(maybeP4);
         var img = maybeImg.val;
-        var newImgUnwrapped = makeTransformImage(a, b, c, d, e, f, img);
+        var newImgUnwrapped = makeTransformImage(p1, p2, p3, p4, img);
         return runtime.makeOpaque(newImgUnwrapped, newImgUnwrapped.equals);
-      }, "transform-img"),
-      // TODO make option and such
-      "get-texture-matrix": F(function(
-        x1s, y1s, x1d, y1d,
-        x2s, y2s, x2d, y2d,
-        x3s, y3s, x3d, y3d,
-        x4s, y4s, x4d, y4d) {
-        return general2DProjection(
-          jsnums.toFixnum(x1s), jsnums.toFixnum(y1s), jsnums.toFixnum(x1d), jsnums.toFixnum(y1d),
-          jsnums.toFixnum(x2s), jsnums.toFixnum(y2s), jsnums.toFixnum(x2d), jsnums.toFixnum(y2d),
-          jsnums.toFixnum(x3s), jsnums.toFixnum(y3s), jsnums.toFixnum(x3d), jsnums.toFixnum(y3d),
-          jsnums.toFixnum(x4s), jsnums.toFixnum(y4s), jsnums.toFixnum(x4d), jsnums.toFixnum(y4d));
-      }, "get-texture-matrix")
-
+      }, "transform-img")
     }, {});
 
   }

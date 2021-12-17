@@ -4,6 +4,7 @@ include image
 include image-structs
 include math
 include string-dict
+include gdrive-js("js-helpers.js", "<insert drive id here>")
 
 #| CONTROLS:
    w moves forwards
@@ -24,6 +25,9 @@ SCREEN-DIMS = {w : 1422, h : 800}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
 DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
+TEX-MAPPING = 
+  [string-dict:
+    "dirt", array-of(DIRT-IMAGE, 6)]
 
 #============= DATA TYPES =============#
 data Pos:
@@ -34,7 +38,7 @@ data Pos:
 end
 
 data Rect:
-  | rect(point1 :: Pos, point2 :: Pos, point3 :: Pos, point4 :: Pos, color :: Color)
+  | rect(point1 :: Pos, point2 :: Pos, point3 :: Pos, point4 :: Pos, texture :: Image)
 end
 
 data FaceDir:
@@ -70,10 +74,10 @@ sharing:
 end
 
 data Face:
-  | face(position :: Pos, dir :: FaceDir, color :: Option<Color>) with:
+  | face(position :: Pos, dir :: FaceDir, id :: Option<String>, texture :: Option<Image>) with:
     method get-points(self :: Face) -> List<Pos>:
       cases (Face) self:
-        | face(position, dir, _) =>
+        | face(position, dir, _, _) =>
           cases (Pos) position:
             | pos(x, y, z) =>
               cases (FaceDir) dir:
@@ -114,12 +118,14 @@ data Face:
     # this should be a temp method
     method get-rect(self :: Face) -> Rect:
       points = self.get-points()
-      cur-color = 
-        cases (Option) self.color:
-          | none => self.dir.get-color()
-          | some(a-color) => a-color
+      cur-texture = 
+        cases (Option) self.texture:
+          | none => 
+            ind = self.dir.get-id()
+            TEX-MAPPING.get-value(self.id.value).get-now(ind)
+          | some(a-texture) => a-texture
         end
-      rect(points.get(0), points.get(1), points.get(2), points.get(3), cur-color)
+      rect(points.get(0), points.get(1), points.get(2), points.get(3), cur-texture)
     end
 end
 
@@ -334,7 +340,7 @@ fun place-blok-looking(state :: State, id :: String) -> State:
     | none => state
     | some(looking-face) =>
       cases (Face) looking-face:
-        | face(a-pos, a-dir, _) =>
+        | face(a-pos, a-dir, _, _) =>
           offset = 
             cases (FaceDir) a-dir:
               | px => pos(1, 0, 0)
@@ -506,7 +512,7 @@ fun generate-mesh(a-chunk :: Chunk) -> Nothing:
       a-pos = key-to-pos(a-key)
       face-dirs = get-faces-to-add(a-chunk.bloks, a-pos)
       cur-blok = a-chunk.bloks.get-value-now(a-key)
-      blok-faces = face-dirs.map({(fd): face(cur-blok.pos, fd, none)})
+      blok-faces = face-dirs.map({(fd): face(cur-blok.pos, fd, some(cur-blok.id), none)})
       cur-blok!{mesh : some(blok-faces)}
     end)
 end
@@ -611,12 +617,12 @@ end
 
 # TODO make this function actually sane
 fun project-rect(a-rect :: Rect, cur-player :: Player) 
-  -> Option<{Point; List<Point>; Number; Color}>:
+  -> Option<{Point; List<Point>; Number; Image}>:
   doc: ```Takes in a rectangle in 3-space; outputs a tuple containing the x-y offset, the points
        of the projected rectangle, the average z-depth of the projected rectangle, 
        and the color of the projected rectangle```
   cases (Rect) a-rect:
-    | rect(pos1, pos2, pos3, pos4, a-color) =>
+    | rect(pos1, pos2, pos3, pos4, a-texture) =>
       new-pos1 = project-pos(pos1, cur-player)
       new-pos2 = project-pos(pos2, cur-player)
       new-pos3 = project-pos(pos3, cur-player)
@@ -640,16 +646,15 @@ fun project-rect(a-rect :: Rect, cur-player :: Player)
         min-y = l3.foldl({(a-point, base): num-min(a-point.y, base)}, 1000000000)
         # make the coords of the points relative to (min-x, min-y)
         l4 = l3.map({(a-point): point(a-point.x - min-x, a-point.y - min-y)})
-        # FLIP THE Y BECAUSE *APPARENTLY* FOR `point-polygon` ONLY, +Y IS UP, NOT DOWN!!
-        l5 = l4.map({(a-point): point(a-point.x, -1 * a-point.y)})
         # get the z-depth of all the points for, uh, reasons, idk
         zs = l1.map({(a-pos): a-pos.z})
         avg-z = sum(zs) / zs.length()
         min-z = min(zs)
-        some({point(min-x, min-y); l5; avg-z; a-color})
+        some({point(min-x, min-y); l4; avg-z; a-texture})
       end
   end
 end
+
 
 fun draw-bloks(disp :: Image, state :: State) -> Image:
   doc: ```Produces the background rectangles of the game.```
@@ -667,9 +672,11 @@ fun draw-bloks(disp :: Image, state :: State) -> Image:
       # welcome to the most hacky z-buffer in the world
       tuples + base
     end.sort-by({(t1, t2): t1.{2} > t2.{2}}, {(t1, t2): within(0.00001)(t1.{2}, t2.{2})})
-  for fold(disp2 from disp, {offset; points; _; a-color} from all-tuples):
+  for fold(disp2 from disp, {offset; points; _; a-texture} from all-tuples):
+    {p1; p2; p3; p4} = {points.get(0); points.get(1); points.get(2); points.get(3)}
     uncropped-image = 
-      underlay-xy(disp2, offset.x, offset.y, point-polygon(points, "solid", a-color))
+      #underlay-xy(disp2, offset.x, offset.y, point-polygon(points, "solid", a-color))
+      underlay-xy(disp2, offset.x, offset.y, transform-img(p1, p2, p3, p4, a-texture))
     crop(num-max(0, 0 - offset.x), num-max(0, 0 - offset.y), SCREEN-DIMS.w, SCREEN-DIMS.h, 
       uncropped-image)
   end
