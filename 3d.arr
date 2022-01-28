@@ -21,7 +21,7 @@ include gdrive-js("js-helpers.js", "<insert drive id here>")
 
 #============= CONSTANTS =============#
 BG-COLOR = dark-slate-blue
-SCREEN-DIMS = {w : 1422, h : 800}
+SCREEN-DIMS = {w : 1200, h : 600}
 CHUNK-SIZE = {x : 16, y : 50, z : 16}
 CHUNK-ARR-SIZE = CHUNK-SIZE.x * CHUNK-SIZE.y * CHUNK-SIZE.z
 DIRT-IMAGE = image-url("https://i.imgur.com/uoJhNzd.png")
