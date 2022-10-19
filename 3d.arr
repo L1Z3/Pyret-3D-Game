@@ -486,7 +486,7 @@ fun get-looking-face(state :: State) -> Option<Face>:
                 dist-to-pz = {num-abs(z - (cur-blok.pos.z + 1)); pz}
                 dist-to-px = {num-abs(x - (cur-blok.pos.x + 1)); px}
                 dists = [list: dist-to-ny, dist-to-nz, dist-to-nx, dist-to-py, dist-to-pz, dist-to-px]
-                  .filter({(t): find({(f): f.dir == t.{1}}, cur-blok!mesh.value)})
+                  .filter({(t): is-some(find({(f): f.dir == t.{1}}, cur-blok!mesh.value))})
                 #spy: dists end
                 # TODO optimize?
                 sorted-faces = cur-blok!mesh.value.sort-by(
